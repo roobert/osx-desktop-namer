@@ -6,9 +6,9 @@
   <img src="screenshots/rename.png" alt="Rename desktop dialog" width="220">
 </p>
 
-# DesktopNamer
+# Desktop Namer
 
-A lightweight macOS menu bar app that lets you name your virtual desktops (Spaces) and shows the current desktop name at a glance.
+A lightweight macOS menu bar app that lets you name your virtual desktops (Spaces). Shows the current desktop name in the menu bar and flashes a HUD overlay when switching spaces.
 
 ## Features
 
