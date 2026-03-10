@@ -2,6 +2,12 @@
 
 A lightweight macOS menu bar app that lets you name your virtual desktops (Spaces) and shows the current desktop name at a glance.
 
+<p align="center">
+  <img src="screenshots/overlay.png" alt="HUD overlay showing desktop name" width="300">
+  &nbsp;&nbsp;
+  <img src="screenshots/menu.png" alt="Menu bar dropdown listing all desktops" width="200">
+</p>
+
 ## Features
 
 - **Menu bar display** — always shows the name of the current desktop in the status bar
