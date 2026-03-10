@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  APP_NAME: DesktopNamer
+  BUNDLE_ID: com.desktopnamer.app
+  TEAM_ID: NVA2TBQ5UN
+
+jobs:
+  build-sign-release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo "$CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          rm -f "$RUNNER_TEMP/certificate.p12"
+
+      - name: Build
+        run: swift build -c release
+
+      - name: Bundle and sign
+        env:
+          SIGNING_IDENTITY: Developer ID Application: Rob Wilson (NVA2TBQ5UN)
+        run: |
+          mkdir -p "$APP_NAME.app/Contents/MacOS"
+          cp SupportFiles/Info.plist "$APP_NAME.app/Contents/"
+          cp ".build/release/$APP_NAME" "$APP_NAME.app/Contents/MacOS/"
+
+          codesign --force --options runtime \
+            --sign "$SIGNING_IDENTITY" \
+            --identifier "$BUNDLE_ID" \
+            --timestamp \
+            "$APP_NAME.app"
+
+      - name: Create DMG
+        env:
+          SIGNING_IDENTITY: Developer ID Application: Rob Wilson (NVA2TBQ5UN)
+        run: |
+          hdiutil create -volname "$APP_NAME" -srcfolder "$APP_NAME.app" \
+            -ov -format UDZO "$APP_NAME.dmg"
+          codesign --force \
+            --sign "$SIGNING_IDENTITY" \
+            --timestamp "$APP_NAME.dmg"
+
+      - name: Notarize
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          xcrun notarytool submit "$APP_NAME.dmg" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+          xcrun stapler staple "$APP_NAME.dmg"
+
+      - name: Create release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
+        with:
+          files: ${{ env.APP_NAME }}.dmg
+          generate_release_notes: true
