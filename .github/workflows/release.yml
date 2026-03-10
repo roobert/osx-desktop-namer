@@ -10,6 +10,9 @@ env:
   BUNDLE_ID: com.desktopnamer.app
   TEAM_ID: NVA2TBQ5UN
 
+permissions:
+  contents: write
+
 jobs:
   build-sign-release:
     runs-on: macos-14
