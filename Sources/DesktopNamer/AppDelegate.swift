@@ -48,6 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         overlayPanel.cancelAndHide()
 
         // Show it fresh after the space-switch animation finishes
+        guard ConfigManager.shared.overlayEnabled else { return }
         let spaceID = currentSpaceID
         overlayTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { [weak self] _ in
             guard let self, self.currentSpaceID == spaceID else { return }
@@ -90,6 +91,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(.separator())
 
+        let resetItem = NSMenuItem(title: "Reset All Names", action: #selector(resetAllNames), keyEquivalent: "")
+        resetItem.target = self
+        menu.addItem(resetItem)
+
+        menu.addItem(.separator())
+
+        let overlayItem = NSMenuItem(title: "Show Overlay", action: #selector(toggleOverlay(_:)), keyEquivalent: "")
+        overlayItem.target = self
+        overlayItem.state = ConfigManager.shared.overlayEnabled ? .on : .off
+        menu.addItem(overlayItem)
+
         let launchItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLaunchAtLogin(_:)), keyEquivalent: "")
         launchItem.target = self
         launchItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -126,6 +138,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if response == .alertFirstButtonReturn {
             let newName = input.stringValue.trimmingCharacters(in: .whitespaces)
             ConfigManager.shared.setName(newName.isEmpty ? nil : newName, forSpaceID: spaceID)
+            refreshUI()
+        }
+    }
+
+    @objc private func toggleOverlay(_ sender: NSMenuItem) {
+        ConfigManager.shared.setOverlayEnabled(!ConfigManager.shared.overlayEnabled)
+        refreshUI()
+    }
+
+    @objc private func resetAllNames() {
+        let alert = NSAlert()
+        alert.messageText = "Reset All Names"
+        alert.informativeText = "This will remove all custom desktop names."
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .warning
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            ConfigManager.shared.resetAll()
             refreshUI()
         }
     }

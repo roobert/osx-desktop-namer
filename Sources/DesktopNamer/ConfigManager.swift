@@ -1,13 +1,15 @@
 import Foundation
 import CGSBridge
 
-/// Persists desktop name mappings to disk.
+/// Persists desktop name mappings and preferences to disk.
 final class ConfigManager {
     static let shared = ConfigManager()
 
     private let configURL: URL
     /// Maps space ID (as String) to user-assigned name.
     private var names: [String: String] = [:]
+    /// Whether the HUD overlay is shown on space switch.
+    private(set) var overlayEnabled: Bool = true
 
     private init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
@@ -35,6 +37,16 @@ final class ConfigManager {
         save()
     }
 
+    func resetAll() {
+        names.removeAll()
+        save()
+    }
+
+    func setOverlayEnabled(_ enabled: Bool) {
+        overlayEnabled = enabled
+        save()
+    }
+
     /// Returns the display name for a space: its custom name, or "Desktop N" as fallback.
     func displayName(forSpaceID id: CGSSpaceID, index: Int) -> String {
         return names[String(id)] ?? "Desktop \(index)"
@@ -42,18 +54,24 @@ final class ConfigManager {
 
     // MARK: - Persistence
 
+    private struct Config: Codable {
+        var names: [String: String] = [:]
+        var overlayEnabled: Bool? = true
+    }
+
     private func load() {
         guard let data = try? Data(contentsOf: configURL),
-              let decoded = try? JSONDecoder().decode([String: String].self, from: data) else {
+              let config = try? JSONDecoder().decode(Config.self, from: data) else {
             return
         }
-        names = decoded
+        names = config.names
+        overlayEnabled = config.overlayEnabled ?? true
     }
 
     private func save() {
-        guard let data = try? JSONEncoder().encode(names) else { return }
+        let config = Config(names: names, overlayEnabled: overlayEnabled)
+        guard let data = try? JSONEncoder().encode(config) else { return }
         try? data.write(to: configURL, options: .atomic)
-        // Restrict to owner-only read/write
         try? FileManager.default.setAttributes(
             [.posixPermissions: 0o600], ofItemAtPath: configURL.path)
     }
