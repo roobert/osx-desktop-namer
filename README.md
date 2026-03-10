@@ -15,7 +15,7 @@ A lightweight macOS menu bar app that lets you name your virtual desktops (Space
 
 ### Download
 
-Grab the latest `DesktopNamer.dmg` from [Releases](https://github.com/roobert/osx-desktop-namer/releases), open it, and drag to `/Applications`.
+Download the latest `DesktopNamer.dmg` from [Releases](https://github.com/roobert/osx-desktop-namer/releases), open it, and drag to `/Applications`.
 
 ### Build from source
 
