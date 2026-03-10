@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="screenshots/overlay.png" alt="HUD overlay showing desktop name" width="300">
-  &nbsp;&nbsp;
   <img src="screenshots/menu.png" alt="Menu bar dropdown listing all desktops" width="200">
+  &nbsp;&nbsp;
+  <img src="screenshots/overlay.png" alt="HUD overlay showing desktop name" width="300">
 </p>
 
 # DesktopNamer
