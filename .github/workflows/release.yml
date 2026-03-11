@@ -79,7 +79,8 @@ jobs:
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --team-id "$TEAM_ID" \
-            --wait
+            --wait \
+            --timeout 30m
           xcrun stapler staple "$APP_NAME.dmg"
 
       - name: Create release
